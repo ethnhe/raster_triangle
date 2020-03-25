@@ -25,8 +25,8 @@ chmod +x ./rastertriangle_so.sh
     python3 rgbd_renderer.py --cls ape --render_num 70000
     ```
     Example rendered images are as follows:
-    ![render0](https://github.com/ethnhe/raster_triangle/tree/master/example_images/rnd0.png)
-    ![render1](https://github.com/ethnhe/raster_triangle/tree/master/example_images/rnd1.png)
+    ![render0](https://github.com/ethnhe/raster_triangle/raw/master/example_images/rnd0.png)
+    ![render1](https://github.com/ethnhe/raster_triangle/raw/master/example_images/rnd1.png)
 
 
 - Run the following command to generate fusing data:
@@ -35,5 +35,5 @@ chmod +x ./rastertriangle_so.sh
     python3 generate_fusing_data.py --cls ape --fuse_num 10000
     ```
     Example fused images are as follows:
-    ![fuse0](https://github.com/ethnhe/raster_triangle/tree/master/example_images/fuse0.png)
-    ![fuse1](https://github.com/ethnhe/raster_triangle/tree/master/example_images/fuse1.png)
+    ![fuse0](https://github.com/ethnhe/raster_triangle/raw/master/example_images/fuse0.png)
+    ![fuse1](https://github.com/ethnhe/raster_triangle/raw/master/example_images/fuse1.png)
