@@ -2,7 +2,6 @@
 import os
 import pickle as pkl
 import numpy as np
-import nori2
 from plyfile import PlyData
 import ctypes as ct
 import cv2
