@@ -204,7 +204,7 @@ void cover_rgbd(float* p , float* pz, float* pr, float* pg, float* pb, int m1,in
 		// 		"zbuf.size: %d, idx: %d\n", 
 		// 		int(sizeof(zbuf)/sizeof(zbuf[0])), int(y*w+x)
 		// );
-		if (zz > zbuf[y*w+x]){
+		if (zz < zbuf[y*w+x]){
 			zbuf[y*w+x] =  zz;
 			rbuf[y*w+x] = int(r_f);
 			gbuf[y*w+x] = int(g_f);
@@ -223,7 +223,7 @@ void rgbzbuffer(int h,int w, float* points_onface, float* points_onface_ori, flo
 
 	for (int i=0; i<h; i++)
 		for (int j=0; j<w; j++){
-			triangle[i*w+j] = -1, zbuf[i*w+j] = -1e9, rbuf[i*w+j] = gbuf[i*w+j] = bbuf[i*w+j] = 0;
+			triangle[i*w+j] = -1, zbuf[i*w+j] = 1e9, rbuf[i*w+j] = gbuf[i*w+j] = bbuf[i*w+j] = 0;
 		}
 	
 	int * xys = (int *) malloc(sizeof(int)*h*w*2);
@@ -235,6 +235,11 @@ void rgbzbuffer(int h,int w, float* points_onface, float* points_onface_ori, flo
 			h, w, xys, 0 
 		);
 	}
+
+	for (int i=0; i<h; i++)
+		for (int j=0; j<w; j++){
+			zbuf[i*w+j] = (zbuf[i*w+j] < 1e8) ? zbuf[i*w+j] : 0;
+		}
 	free(triangle);
 	free(xys);
 }
