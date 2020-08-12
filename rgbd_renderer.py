@@ -34,6 +34,10 @@ parser.add_argument(
     '--DEBUG', action="store_true",
     help="To show the generated images or not."
 )
+parser.add_argument(
+    '--vis', action="store_true",
+    help="visulaize generated images."
+)
 args = parser.parse_args()
 DEBUG = args.DEBUG
 
@@ -185,6 +189,21 @@ class LineModRenderDB():
             msk_3c = np.repeat(msk[:, :, None], 3, axis=2)
             bgr = bg * (msk_3c <= 0).astype(bg.dtype) + bgr * (msk_3c).astype(bg.dtype)
             rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+
+            if args.vis:
+                try:
+                    from neupeak.utils.webcv2 import imshow, waitKey
+                except:
+                    from cv2 import imshow, waitKey
+                imshow("bgr", bgr.astype("uint8"))
+                show_zbuf = zbuf.copy()
+                min_d, max_d = show_zbuf[show_zbuf > 0].min(), show_zbuf.max()
+                show_zbuf[show_zbuf>0] = (show_zbuf[show_zbuf>0] - min_d) / (max_d - min_d) * 255
+                show_zbuf = show_zbuf.astype(np.uint8)
+                imshow("dpt", show_zbuf)
+                show_msk = (msk / msk.max() * 255).astype("uint8")
+                imshow("msk", show_msk)
+                waitKey(0)
 
             data = {}
             data['depth'] = zbuf
