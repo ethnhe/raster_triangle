@@ -158,7 +158,7 @@ class LineModRenderDB():
             )
 
             zbuf.resize((h,w))
-            msk = (zbuf>-1e8).astype('uint8')
+            msk = (zbuf>1e-8).astype('uint8')
             if len( np.where(msk.flatten() > 0)[0] ) < 500:
                 continue
             zbuf *= msk.astype(zbuf.dtype) # * 1000.0
