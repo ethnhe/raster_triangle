@@ -85,6 +85,9 @@ class LineModRenderDB():
         self.bg_img_pth_lst = glob("SUN2012pascalformat/JPEGImages/*.jpg")
 
         random.seed(19763)
+        if render_num < len(self.RT_lst):
+            random.shuffle(self.RT_lst)
+            self.RT_lst = self.RT_lst[:render_num]
 
         print("begin loading {} render set:".format(cls_type))
 
