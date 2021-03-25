@@ -170,22 +170,28 @@ class LineModRenderDB():
             bg = None
             len_bg_lst = len(self.bg_img_pth_lst)
             while bg is None or len(bg.shape) < 3:
-                bg_pth = self.bg_img_pth_lst[randint(0, len_bg_lst-1)]
+                bg_pth = args.bg_img_pth_lst[randint(0, len_bg_lst-1)]
                 bg = cv2.imread(bg_pth)
                 if len(bg.shape) < 3:
-                    continue
-                bg_h, bg_w, _ = bg.shape
-                if bg_h < h or bg_w < w:
                     bg = None
                     continue
-                else:
-                    sh = sw = 0
-                    sh, sw = randint(0, bg_h-h), randint(0, bg_w-w)
-                    if sh+h > bg_h:
-                        sh -= 1
-                    if sw+w > bg_w:
-                        sw -= 1
-                    bg = bg[sh:sh+h, sw:sw+w, :]
+                bg_h, bg_w, _ = bg.shape
+                if bg_h < h:
+                    new_w = int(float(h) / bg_h * bg_w)
+                    bg = cv2.resize(bg, (new_w, h))
+                bg_h, bg_w, _ = bg.shape
+                if bg_w < w:
+                    new_h = int(float(w) / bg_w * bg_h)
+                    bg = cv2.resize(bg, (w, new_h))
+                bg_h, bg_w, _ = bg.shape
+                if bg_h > h:
+                    sh = randint(0, bg_h-h)
+                    bg = bg[sh:sh+h, :, :]
+                bg_h, bg_w, _ = bg.shape
+                if bg_w > w:
+                    sw = randint(0, bg_w-w)
+                    bg = bg[:, sw:sw+w, :]
+
             msk_3c = np.repeat(msk[:, :, None], 3, axis=2)
             bgr = bg * (msk_3c <= 0).astype(bg.dtype) + bgr * (msk_3c).astype(bg.dtype)
             rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
