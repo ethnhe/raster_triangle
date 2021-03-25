@@ -14,10 +14,6 @@ from glob import glob
 from argparse import ArgumentParser
 import concurrent.futures
 import time
-try:
-    from neupeak.utils.webcv2 import imshow, waitKey
-except:
-    from cv2 import imshow, waitKey
 
 
 parser = ArgumentParser()
@@ -46,21 +42,23 @@ def check_dir(pth):
     if not os.path.exists(pth):
         os.system("mkdir -p {}".format(pth))
 
+
 OBJ_ID_DICT = {
-    'ape':1,
-    'cam':2,
-    'cat':3,
-    'duck':4,
-    'glue':5,
-    'iron':6,
-    'phone':7,
-    'benchvise':8,
-    'can':9,
-    'driller':10,
-    'eggbox':11,
-    'holepuncher':12,
-    'lamp':13,
+    'ape': 1,
+    'benchvise': 2,
+    'cam': 4,
+    'can': 5,
+    'cat': 6,
+    'driller': 8,
+    'duck': 9,
+    'eggbox': 10,
+    'glue': 11,
+    'holepuncher': 12,
+    'iron': 13,
+    'lamp': 14,
+    'phone': 15,
 }
+
 
 class LineModRenderDB():
     def __init__(self, cls_type, render_num=10, rewrite=False):
@@ -136,12 +134,11 @@ class LineModRenderDB():
             p2ds = p2ds[:, :2] / p2ds[:, 2:]
             p2ds = np.require(p2ds.flatten(), 'float32', 'C')
 
-            zs = np.require(new_xyz[:,2].copy(), 'float32', 'C')
+            zs = np.require(new_xyz[:, 2].copy(), 'float32', 'C')
             zbuf = np.require(np.zeros(h*w), 'float32', 'C')
             rbuf = np.require(np.zeros(h*w), 'int32', 'C')
             gbuf = np.require(np.zeros(h*w), 'int32', 'C')
             bbuf = np.require(np.zeros(h*w), 'int32', 'C')
-            xyzs = np.require(new_xyz.flatten(), 'float32', 'C')
 
             self.dll.rgbzbuffer(
                 ct.c_int(h),
@@ -160,14 +157,14 @@ class LineModRenderDB():
                 bbuf.ctypes.data_as(ct.c_void_p),
             )
 
-            zbuf.resize((h,w))
-            msk = (zbuf>1e-8).astype('uint8')
-            if len( np.where(msk.flatten() > 0)[0] ) < 500:
+            zbuf.resize((h, w))
+            msk = (zbuf > 1e-8).astype('uint8')
+            if len(np.where(msk.flatten() > 0)[0]) < 500:
                 continue
-            zbuf *= msk.astype(zbuf.dtype) # * 1000.0
+            zbuf *= msk.astype(zbuf.dtype)  # * 1000.0
 
-            bbuf.resize((h,w)), rbuf.resize((h,w)), gbuf.resize((h,w))
-            bgr = np.concatenate((bbuf[:,:,None], gbuf[:, :, None], rbuf[:, :, None]), axis=2)
+            bbuf.resize((h, w)), rbuf.resize((h, w)), gbuf.resize((h, w))
+            bgr = np.concatenate((bbuf[:, :, None], gbuf[:, :, None], rbuf[:, :, None]), axis=2)
             bgr = bgr.astype('uint8')
 
             bg = None
@@ -196,12 +193,12 @@ class LineModRenderDB():
             if args.vis:
                 try:
                     from neupeak.utils.webcv2 import imshow, waitKey
-                except:
+                except ImportError:
                     from cv2 import imshow, waitKey
                 imshow("bgr", bgr.astype("uint8"))
                 show_zbuf = zbuf.copy()
                 min_d, max_d = show_zbuf[show_zbuf > 0].min(), show_zbuf.max()
-                show_zbuf[show_zbuf>0] = (show_zbuf[show_zbuf>0] - min_d) / (max_d - min_d) * 255
+                show_zbuf[show_zbuf > 0] = (show_zbuf[show_zbuf > 0] - min_d) / (max_d - min_d) * 255
                 show_zbuf = show_zbuf.astype(np.uint8)
                 imshow("dpt", show_zbuf)
                 show_msk = (msk / msk.max() * 255).astype("uint8")
@@ -216,12 +213,11 @@ class LineModRenderDB():
             data['RT'] = RT
             data['cls_typ'] = self.cls_type
             data['rnd_typ'] = 'render'
-            data_str = pkl.dumps(data)
             sv_pth = os.path.join(self.render_dir, "{}.pkl".format(idx))
             if DEBUG:
                 imshow("rgb", rgb[:, :, ::-1].astype("uint8"))
                 imshow("depth", (zbuf / zbuf.max() * 255).astype("uint8"))
-                imshow("mask", (msk/ msk.max() * 255).astype("uint8"))
+                imshow("mask", (msk / msk.max() * 255).astype("uint8"))
                 waitKey(0)
             pkl.dump(data, open(sv_pth, "wb"))
             pth_lst.append(os.path.abspath(sv_pth))

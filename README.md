@@ -25,6 +25,7 @@ chmod +x ./rastertriangle_so.sh
     python3 rgbd_renderer.py --help
     python3 rgbd_renderer.py --cls ape --render_num 70000
     ```
+    The generated depth map is in unit meter(m).
     Example rendered images are as follows:
     ![render0](./example_images/rnd0.png)
     ![render1](./example_images/rnd1.png)
@@ -33,8 +34,9 @@ chmod +x ./rastertriangle_so.sh
 - Run the following command to generate fusing data:
     ```shell
     python3 fuse.py --help
-    python3 generate_fusing_data.py --cls ape --fuse_num 10000
+    python3 fuse.py --cls ape --fuse_num 10000
     ```
+    The generated depth map is in unit meter(m).
     Example fused images are as follows:
     ![fuse0](./example_images/fuse0.png)
     ![fuse1](./example_images/fuse1.png)
