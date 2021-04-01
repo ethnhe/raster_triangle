@@ -170,7 +170,7 @@ class LineModRenderDB():
             bg = None
             len_bg_lst = len(self.bg_img_pth_lst)
             while bg is None or len(bg.shape) < 3:
-                bg_pth = args.bg_img_pth_lst[randint(0, len_bg_lst-1)]
+                bg_pth = self.bg_img_pth_lst[randint(0, len_bg_lst-1)]
                 bg = cv2.imread(bg_pth)
                 if len(bg.shape) < 3:
                     bg = None

@@ -1,5 +1,5 @@
 # Raster Triangle
-This is a simple renderer with z-buffer for synthesis data generating. With an input mesh and its pose, the rendered RGB and depth map are generated. It has been applied to [PVN3D](https://github.com/ethnhe/PVN3D).
+This is a simple renderer with z-buffer for synthesis data generating. With an input mesh and its pose, the rendered RGB and depth map are generated. It has been applied to [PVN3D](https://github.com/ethnhe/PVN3D) and [FFB6D](https://github.com/ethnhe/FFB6D).
 
 ## Installation
 Compile the source code by
@@ -13,7 +13,7 @@ chmod +x ./rastertriangle_so.sh
     ```shell
     ln -s path_to_Linemod_preprocessed ./Linemod_preprocessed
     ```
-- Download SUN2012pascalformat dataset from [here](http://groups.csail.mit.edu/vision/SUN/releases/SUN2012pascalformat.tar.gz). Unzip it and link the unzipped folder to this folder:
+- Download SUN2012pascalformat dataset from [here](http://groups.csail.mit.edu/vision/SUN/releases/SUN2012pascalformat.tar.gz)(works with FireFox or right click and open link in new tab in Chrome) or [here](https://github.com/ShapeNet/RenderForCNN/blob/master/datasets/get_sun2012pascalformat.sh). Unzip it and link the unzipped folder to this folder:
     ```shell
     ln -s path_to_SUN2012pascalformat ./
     ```
