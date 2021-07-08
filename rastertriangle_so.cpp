@@ -244,4 +244,72 @@ void rgbzbuffer(int h,int w, float* points_onface, float* points_onface_ori, flo
 	free(xys);
 }
 
+
+void cover_d(float* p , float* pz, int m1,int m2,int m3, int idx, int* triangle ,float* zbuf, int h,int w, int * xys, int debug){
+
+	float xy3[6];
+	xy3[0] = p[m1*2+0];
+	xy3[1] = p[m1*2+1];
+	xy3[2] = p[m2*2+0];
+	xy3[3] = p[m2*2+1];
+	xy3[4] = p[m3*2+0];
+	xy3[5] = p[m3*2+1];
+
+	if (debug == 1){
+		printf("%d, %d, %d\n", m1, m2, m3);
+	}
+
+	if (isline(xy3))
+		return;
+
+	int num = pixelsInTriangle(h,w,xy3,xys);
+	for (int i =0; i<num; i++){
+		int x = xys[i*2];
+		int y = xys[i*2+1];
+		float zz = inter(p,pz,x,y,m1,m2,m3);
+		// if (debug==1)
+		// 	printf("zz = %f %f\n",zz,zbuf[y*w+x]),
+		// 	printf("xy = %d %d\n",y,x);
+
+		// printf(
+		// 		"zbuf.size: %d, idx: %d\n", 
+		// 		int(sizeof(zbuf)/sizeof(zbuf[0])), int(y*w+x)
+		// );
+		if (zz < zbuf[y*w+x]){
+			zbuf[y*w+x] =  zz;
+			triangle[y*w+x] = idx;
+		}	
+	}	
+	//printf("Finish render.\n");
+}
+
+
+void zbuffer(int h,int w, float* points_onface, float* points_onface_ori, float* points_z, int len_mesh, int* mesh, float* zbuf){
+
+	int * triangle = (int *) malloc(sizeof(int)*h*w);	
+	//float * zbuf = (float *) malloc(sizeof(float)*h*w);
+
+	for (int i=0; i<h; i++)
+		for (int j=0; j<w; j++){
+			triangle[i*w+j] = -1, zbuf[i*w+j] = 1e9;
+		}
+	
+	int * xys = (int *) malloc(sizeof(int)*h*w*2);
+
+	for (int i=0; i<len_mesh; i++){
+		cover_d(
+			points_onface, points_z, mesh[i*3+0], 
+			mesh[i*3+1], mesh[i*3+2], i, triangle, zbuf,
+			h, w, xys, 0 
+		);
+	}
+
+	for (int i=0; i<h; i++)
+		for (int j=0; j<w; j++){
+			zbuf[i*w+j] = (zbuf[i*w+j] < 1e8) ? zbuf[i*w+j] : 0;
+		}
+	free(triangle);
+	free(xys);
+}
+
 }//extern "C"
