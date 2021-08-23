@@ -246,7 +246,6 @@ void rgbzbuffer(int h,int w, float* points_onface, float* points_onface_ori, flo
 
 
 void cover_d(float* p , float* pz, int m1,int m2,int m3, int idx, int* triangle ,float* zbuf, int h,int w, int * xys, int debug){
-
 	float xy3[6];
 	xy3[0] = p[m1*2+0];
 	xy3[1] = p[m1*2+1];
@@ -284,7 +283,7 @@ void cover_d(float* p , float* pz, int m1,int m2,int m3, int idx, int* triangle 
 }
 
 
-void zbuffer(int h,int w, float* points_onface, float* points_onface_ori, float* points_z, int len_mesh, int* mesh, float* zbuf){
+void zbuffer(int h,int w, float* points_onface, float* points_z, int len_mesh, int* mesh, float* zbuf){
 
 	int * triangle = (int *) malloc(sizeof(int)*h*w);	
 	//float * zbuf = (float *) malloc(sizeof(float)*h*w);
