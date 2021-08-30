@@ -80,7 +80,7 @@ def main():
             from neupeak.utils.webcv2 import imshow, waitKey
         except ImportError:
             from cv2 import imshow, waitKey
-        show_dpt = dpt2heat(depth)
+        show_dpt = dpt2heat(depth.copy())
         imshow("render_depth:", show_dpt)
         waitKey(0)
 
