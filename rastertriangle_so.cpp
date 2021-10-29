@@ -166,7 +166,6 @@ bool isline(float* xy3){
 
 
 void cover_rgbd(float* p , float* pz, float* pr, float* pg, float* pb, int m1,int m2,int m3, int idx, int* triangle ,float* zbuf, int* rbuf, int* gbuf, int* bbuf, int h,int w, int * xys, int debug){
-
 	float xy3[6];
 	xy3[0] = p[m1*2+0];
 	xy3[1] = p[m1*2+1];
@@ -177,12 +176,6 @@ void cover_rgbd(float* p , float* pz, float* pr, float* pg, float* pb, int m1,in
 
 	if (debug == 1){
 		printf("%d, %d, %d\n", m1, m2, m3);
-		//printf("%f ", xy3[0]);
-		//printf("%f ", xy3[1]);
-		//printf("%f ", xy3[2]);
-		//printf("%f ", xy3[3]);
-		//printf("%f ", xy3[4]);
-		//printf("%f ", xy3[5]);
 	}
 
 	if (isline(xy3))
@@ -196,14 +189,6 @@ void cover_rgbd(float* p , float* pz, float* pr, float* pg, float* pb, int m1,in
 		float r_f = inter(p,pr,x,y,m1,m2,m3);
 		float g_f = inter(p,pg,x,y,m1,m2,m3);
 		float b_f = inter(p,pb,x,y,m1,m2,m3);
-		// if (debug==1)
-		// 	printf("zz = %f %f\n",zz,zbuf[y*w+x]),
-		// 	printf("xy = %d %d\n",y,x);
-
-		// printf(
-		// 		"zbuf.size: %d, idx: %d\n", 
-		// 		int(sizeof(zbuf)/sizeof(zbuf[0])), int(y*w+x)
-		// );
 		if (zz < zbuf[y*w+x]){
 			zbuf[y*w+x] =  zz;
 			rbuf[y*w+x] = int(r_f);
@@ -212,14 +197,11 @@ void cover_rgbd(float* p , float* pz, float* pr, float* pg, float* pb, int m1,in
 			triangle[y*w+x] = idx;
 		}	
 	}	
-	//printf("Finish render.\n");
 }
-
 
 void rgbzbuffer(int h,int w, float* points_onface, float* points_onface_ori, float* points_z, float* points_r, float* points_g, float* points_b, int len_mesh, int* mesh, float* zbuf, int* rbuf, int* gbuf, int* bbuf){
 
-	int * triangle = (int *) malloc(sizeof(int)*h*w);	
-	//float * zbuf = (float *) malloc(sizeof(float)*h*w);
+	int * triangle = (int *) malloc(sizeof(int)*h*w);
 
 	for (int i=0; i<h; i++)
 		for (int j=0; j<w; j++){
@@ -239,6 +221,106 @@ void rgbzbuffer(int h,int w, float* points_onface, float* points_onface_ori, flo
 	for (int i=0; i<h; i++)
 		for (int j=0; j<w; j++){
 			zbuf[i*w+j] = (zbuf[i*w+j] < 1e8) ? zbuf[i*w+j] : 0;
+		}
+	free(triangle);
+	free(xys);
+}
+
+
+float bilinear_inter(int x1, int y1, int x2, int y2, float x, float y, float f11, float f21, float f12, float f22){
+	float f_xy1=(x2-x)/(x2-x1)*f11+(x-x1)/(x2-x1)*f21;
+	float f_xy2=(x2-x)/(x2-x1)*f12+(x-x1)/(x2-x1)*f22;
+	float f=(y2-y)/(y2-y1)*f_xy1+(y-y1)/(y2-y1)*f_xy2;
+	return f;
+}
+
+void cover_uvrgbd(
+	float* p , float* pz, float* pu, float* pv, float* trgb, int m1,int m2,int m3, int idx,
+	int* triangle, float* rgbzbuf, int h,int w, int th, int tw, int * xys, int debug
+){
+
+	float xy3[6];
+	xy3[0] = p[m1*2+0];
+	xy3[1] = p[m1*2+1];
+	xy3[2] = p[m2*2+0];
+	xy3[3] = p[m2*2+1];
+	xy3[4] = p[m3*2+0];
+	xy3[5] = p[m3*2+1];
+
+	if (debug == 1){
+		printf("%d, %d, %d\n", m1, m2, m3);
+	}
+
+	if (isline(xy3))
+		return;
+
+	int num = pixelsInTriangle(h,w,xy3,xys);
+	for (int i =0; i<num; i++){
+		int x = xys[i*2];
+		int y = xys[i*2+1];
+		float zz = inter(p,pz,x,y,m1,m2,m3);
+		float uu = inter(p,pu,x,y,m1,m2,m3);
+		float vv = inter(p,pv,x,y,m1,m2,m3);
+		if (zz < rgbzbuf[y*w*4+x*4+3]){
+			float tx = (uu * tw) - 0.5;
+    		float ty = (1. - vv) * th - 0.5;
+			int x1=int(tx);
+			int x2=int(tx)+1;
+			int y1=int(ty);
+			int y2=int(ty)+1;
+			if ((x2>=tw)|(y2>=th)){
+				rgbzbuf[y*w*4+x*4+0] = trgb[y1*tw*3+x1*3+0];
+				rgbzbuf[y*w*4+x*4+1] = trgb[y1*tw*3+x1*3+1];
+				rgbzbuf[y*w*4+x*4+2] = trgb[y1*tw*3+x1*3+2];
+			}else{
+				rgbzbuf[y*w*4+x*4+0] = bilinear_inter(
+					x1, y1, x2, y2, tx, ty, trgb[y1*tw*3+x1*3+0],
+					trgb[y1*tw*3+x2*3+0], trgb[y2*tw*3+x1*3+0],
+					trgb[y2*tw*3+x2*3+0]
+				);
+				rgbzbuf[y*w*4+x*4+1] = bilinear_inter(
+					x1, y1, x2, y2, tx, ty, trgb[y1*tw*3+x1*3+1],
+					trgb[y1*tw*3+x2*3+1], trgb[y2*tw*3+x1*3+1],
+					trgb[y2*tw*3+x2*3+1]
+				);
+				rgbzbuf[y*w*4+x*4+2] = bilinear_inter(
+					x1, y1, x2, y2, tx, ty, trgb[y1*tw*3+x1*3+2],
+					trgb[y1*tw*3+x2*3+2], trgb[y2*tw*3+x1*3+2],
+					trgb[y2*tw*3+x2*3+2]
+				);
+			}
+			rgbzbuf[y*w*4+x*4+3] = zz;
+			triangle[y*w+x] = idx;
+		}	
+	}	
+}
+
+void uv_rgbzbuffer(
+	int h,int w, float* points_onface, float* points_onface_ori, float* points_z, float* points_u, float* points_v, int len_mesh, int* mesh,
+	int th, int tw, float* tmap, float* rgbzbuf
+){
+
+	int * triangle = (int *) malloc(sizeof(int)*h*w);
+
+	for (int i=0; i<h; i++)
+		for (int j=0; j<w; j++){
+			triangle[i*w+j] = -1,
+			rgbzbuf[i*w*4+j*4+3] = 1e9, rgbzbuf[i*w*4+j*4+0] = rgbzbuf[i*w*4+j*4+1] = rgbzbuf[i*w*4+j*4+2] = 0;
+		}
+	
+	int * xys = (int *) malloc(sizeof(int)*h*w*2);
+
+	for (int i=0; i<len_mesh; i++){
+		cover_uvrgbd(
+			points_onface, points_z, points_u, points_v, tmap, mesh[i*3+0], 
+			mesh[i*3+1], mesh[i*3+2], i, triangle, rgbzbuf,
+			h, w, th, tw, xys, 0 
+		);
+	}
+
+	for (int i=0; i<h; i++)
+		for (int j=0; j<w; j++){
+			rgbzbuf[i*w*4+j*4+3] = (rgbzbuf[i*w*4+j*4+3] < 1e8) ? rgbzbuf[i*w*4+j*4+3] : 0;
 		}
 	free(triangle);
 	free(xys);
@@ -266,27 +348,15 @@ void cover_d(float* p , float* pz, int m1,int m2,int m3, int idx, int* triangle 
 		int x = xys[i*2];
 		int y = xys[i*2+1];
 		float zz = inter(p,pz,x,y,m1,m2,m3);
-		// if (debug==1)
-		// 	printf("zz = %f %f\n",zz,zbuf[y*w+x]),
-		// 	printf("xy = %d %d\n",y,x);
-
-		// printf(
-		// 		"zbuf.size: %d, idx: %d\n", 
-		// 		int(sizeof(zbuf)/sizeof(zbuf[0])), int(y*w+x)
-		// );
 		if (zz < zbuf[y*w+x]){
 			zbuf[y*w+x] =  zz;
 			triangle[y*w+x] = idx;
 		}	
 	}	
-	//printf("Finish render.\n");
 }
 
-
 void zbuffer(int h,int w, float* points_onface, float* points_z, int len_mesh, int* mesh, float* zbuf){
-
 	int * triangle = (int *) malloc(sizeof(int)*h*w);	
-	//float * zbuf = (float *) malloc(sizeof(float)*h*w);
 
 	for (int i=0; i<h; i++)
 		for (int j=0; j<w; j++){
