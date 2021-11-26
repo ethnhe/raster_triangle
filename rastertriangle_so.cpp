@@ -380,5 +380,42 @@ void zbuffer(int h,int w, float* points_onface, float* points_z, int len_mesh, i
 	free(triangle);
 	free(xys);
 }
+	
+
+void pcld_zbuffer(int h, int w, int* points_onface, float* points_z, int len_pts, int* blur_directions, int n_blur, float* zbuf){
+        /*
+         * h, w: rendered image height and width
+         * points_onface: flatten uv: (p3d[:, :2].dot(K.T) / p3d[:, 2:] + 0.5).astype(np.int32).flatten()
+         * points_z: p3ds[:, 2]
+         * len_pts: number of points to be rendered
+         * blur_directions: bluring direction of each point on 2D depth, each rendered depth value will diffuse to adjacent pixels. eg: [(-1, -1), (-1, 0), (-1, 1), ..., (1, 1)] for 9 adjacent pixels
+         * n_blur: number of blur directions
+         * zbuf: output zbuffer
+         */
+        for (int i=0; i<h; i++)
+                for (int j=0; j<w; j++){
+                        zbuf[i*w+j] = 1e9;
+                }
+        
+        for (int i=0; i<len_pts; i++){
+                int u=points_onface[i*2], v=points_onface[i*2+1];
+                // printf("ori_uv: %d, %d\n", u, v);
+                for (int j=0; j<n_blur; j++){
+                        int bu=blur_directions[j*2], bv=blur_directions[j*2+1];
+                        u=u+bu, v=v+bv;
+                        u=max(u, 0), v=max(v, 0);
+                        u=min(u, w-1), v=min(v, h-1);
+                        // printf("uv_cng: %d, %d\n", u, v);
+                        // printf("zbuf_v, z: %f %f\n", zbuf[v*w+u], points_z[i]);
+                        zbuf[v*w+u] = min(zbuf[v*w+u], points_z[i]);
+                }
+        }
+
+        for (int i=0; i<h; i++)
+                for (int j=0; j<w; j++){
+                        zbuf[i*w+j] = (zbuf[i*w+j] < 1e8) ? zbuf[i*w+j] : 0;
+                }
+}
+
 
 }//extern "C"
