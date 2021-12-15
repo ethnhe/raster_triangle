@@ -10,7 +10,9 @@ import matplotlib.pyplot as plt
 
 mdl_ptn = '/data/6D_pose_data/BOP/lm/models/*.ply'
 mdl_pth_lst = glob(mdl_ptn)
-so_p = './rastertriangle_so.so'
+cur_dir = os.path.dirname(os.path.realpath(__file__))
+so_p = os.path.join(cur_dir, 'rastertriangle_so.so')
+print("raster triangle so path:", so_p)
 dll = np.ctypeslib.load_library(so_p, '.')
 
 
@@ -20,8 +22,8 @@ def load_trimesh(pth, scale2m=1.):
     return mesh
 
 
-def depth_renderer(mesh, K, RT=np.eye(4), h=480, w=640):
-    vtxs = np.array(mesh.vertices)
+def depth_renderer(mesh, K, RT=np.eye(4), h=480, w=640, scale2m=1.):
+    vtxs = np.array(mesh.vertices) / scale2m
     faces = np.array(mesh.faces)
     n_face = faces.shape[0]
     face = faces.flatten().copy()
@@ -54,6 +56,36 @@ def depth_renderer(mesh, K, RT=np.eye(4), h=480, w=640):
     msk = (zbuf > 1e-8).astype('uint8')
     zbuf *= msk.astype(zbuf.dtype)  # * 1000.0
     return zbuf, msk
+
+
+def dpt2cld(dpt, cam_scale, K):
+    """
+    dpt: h x w depth image
+    cam_scale: scale depth to (m). e.g: dpt in mm, cam_scale should be 1000
+    K: camera intrinsic
+    """
+    h, w = dpt.shape[0], dpt.shape[1]
+    xmap = np.array([[j for i in range(w)] for j in range(h)])
+    ymap = np.array([[i for i in range(w)] for j in range(h)])
+
+    if len(dpt.shape) > 2:
+        dpt = dpt[:, :, 0]
+    msk_dp = dpt > 1e-6
+    choose = msk_dp.flatten()
+    if choose.sum() < 1:
+        return None, None
+
+    dpt_mskd = dpt.flatten()[choose][:, np.newaxis].astype(np.float32)
+    xmap_mskd = xmap.flatten()[choose][:, np.newaxis].astype(np.float32)
+    ymap_mskd = ymap.flatten()[choose][:, np.newaxis].astype(np.float32)
+
+    pt2 = dpt_mskd / cam_scale
+    cam_cx, cam_cy = K[0][2], K[1][2]
+    cam_fx, cam_fy = K[0][0], K[1][1]
+    pt0 = (ymap_mskd - cam_cx) * pt2 / cam_fx
+    pt1 = (xmap_mskd - cam_cy) * pt2 / cam_fy
+    cld = np.concatenate((pt0, pt1, pt2), axis=1)
+    return cld
 
 
 def dpt2heat(dpt):
